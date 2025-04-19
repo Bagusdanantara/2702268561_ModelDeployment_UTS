@@ -1,17 +1,31 @@
-pip install pandas numpy scikit-learn xgboost streamlit
+# Install libraries if not installed
+import os
+import subprocess
+import sys
 
+# List of required libraries
+required_libraries = ['pandas', 'numpy', 'scikit-learn', 'xgboost', 'streamlit', 'joblib']
+
+# Check and install missing libraries
+for lib in required_libraries:
+    try:
+        __import__(lib)
+    except ImportError:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", lib])
+
+# Proceed with imports
 import streamlit as st
-import pickle
+import joblib
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from xgboost import XGBClassifier
 
 # ModelTrainer Class
 class ModelTrainer:
-    def __init__(self, df, categorical_cols, numerical_cols, target_col):
+    def __init__(self, df, categorical_cols, numerical_cols, target_col, model):
         self.df = df
         self.categorical_cols = categorical_cols
         self.numerical_cols = numerical_cols
@@ -22,7 +36,7 @@ class ModelTrainer:
         self.xtest = None
         self.ytrain = None
         self.ytest = None
-        self.xgb_model = None
+        self.model = model
 
     def preprocess_data(self):
         # Preprocessing, deteksi outlier dan handling missing data
@@ -52,15 +66,11 @@ class ModelTrainer:
         self.xtrain[self.numerical_cols] = scaler.fit_transform(self.xtrain[self.numerical_cols])
         self.xtest[self.numerical_cols] = scaler.transform(self.xtest[self.numerical_cols])
 
-    def train_xgboost(self):
-        self.xgb_model = XGBClassifier(n_estimators=100, random_state=42)
-        self.xgb_model.fit(self.xtrain, self.ytrain)
-
     def evaluate_model(self):
-        y_pred = self.xgb_model.predict(self.xtest)
-        print("XGBoost Accuracy:", accuracy_score(self.ytest, y_pred))
-        print("Confusion Matrix (XGBoost):\n", confusion_matrix(self.ytest, y_pred))
-        print("Classification Report (XGBoost):\n", classification_report(self.ytest, y_pred))
+        y_pred = self.model.predict(self.xtest)
+        print("Model Accuracy:", accuracy_score(self.ytest, y_pred))
+        print("Confusion Matrix:\n", confusion_matrix(self.ytest, y_pred))
+        print("Classification Report:\n", classification_report(self.ytest, y_pred))
 
     def predict(self, input_data):
         input_data = pd.DataFrame(input_data)
@@ -70,16 +80,44 @@ class ModelTrainer:
         scaler = StandardScaler()
         input_data[self.numerical_cols] = scaler.fit_transform(input_data[self.numerical_cols])
 
-        prediction = self.xgb_model.predict(input_data)
+        prediction = self.model.predict(input_data)
         return prediction
 
 # Streamlit UI
 def main():
-    df = pd.read_csv("Dataset_A_loan.csv")  
+    # Membaca data secara manual
+    data = {
+        'person_age': [30, 45, 36, 50],
+        'person_income': [50000, 60000, 55000, 70000],
+        'person_emp_exp': [5, 20, 12, 25],
+        'loan_amnt': [15000, 20000, 18000, 22000],
+        'loan_int_rate': [7.5, 8.0, 7.2, 6.8],
+        'loan_percent_income': [30, 35, 30, 28],
+        'cb_person_cred_hist_length': [12, 15, 10, 20],
+        'credit_score': [700, 720, 690, 750],
+        'person_gender': ['male', 'female', 'male', 'female'],
+        'person_education': ['Bachelor', 'Master', 'High School', 'Doctorate'],
+        'loan_intent': ['PERSONAL', 'EDUCATION', 'PERSONAL', 'HOMEIMPROVEMENT'],
+        'person_home_ownership': ['OWN', 'RENT', 'MORTGAGE', 'OWN'],
+        'previous_loan_defaults_on_file': ['No', 'Yes', 'No', 'Yes'],
+        'loan_status': [1, 0, 1, 0]  # 1 = Approved, 0 = Rejected
+    }
+
+    # Membuat DataFrame dari dictionary
+    df = pd.DataFrame(data)
+
+    # Mengimpor model yang disimpan
+    model = joblib.load('XGB_model.pkl')  # Ganti dengan path yang sesuai ke file model Anda
+
+    # Preprocessing dan pelatihan model
+    trainer = ModelTrainer(df, 
+                           categorical_cols=['person_gender', 'person_education', 'loan_intent', 'person_home_ownership', 'previous_loan_defaults_on_file', 'cleaned_real_gender'],
+                           numerical_cols=['person_age', 'person_income', 'person_emp_exp', 'loan_amnt', 'loan_int_rate', 'loan_percent_income', 'cb_person_cred_hist_length', 'credit_score', 'person_real_exp'],
+                           target_col='loan_status',
+                           model=model)
+    trainer.preprocess_data()
 
     st.title("Loan Status Prediction")
-
-    st.write("Masukkan data untuk memprediksi status pinjaman (Approved atau Rejected):")
 
     # Formulir input dari pengguna
     person_age = st.number_input("Age", min_value=18, max_value=100, value=30)
@@ -114,13 +152,6 @@ def main():
             'person_home_ownership': [person_home_ownership],
             'previous_loan_defaults_on_file': [previous_loan_defaults_on_file]
         }
-
-        # Inisialisasi ModelTrainer dan preprocessing
-        trainer = ModelTrainer(df, categorical_cols=['person_gender', 'person_education', 'loan_intent', 'person_home_ownership', 'previous_loan_defaults_on_file', 'cleaned_real_gender'],
-                               numerical_cols=['person_age', 'person_income', 'person_emp_exp', 'loan_amnt', 'loan_int_rate', 'loan_percent_income', 'cb_person_cred_hist_length', 'credit_score', 'person_real_exp'],
-                               target_col='loan_status')
-        trainer.preprocess_data()
-        trainer.train_xgboost()
 
         # Melakukan prediksi
         prediction = trainer.predict(input_data)
