@@ -61,7 +61,6 @@ class ModelTrainer:
         print("Classification Report (XGBoost):\n", classification_report(self.ytest, y_pred))
 
     def predict(self, input_data):
-        # Melakukan prediksi dengan model yang sudah dilatih
         input_data = pd.DataFrame(input_data)
         input_data = pd.get_dummies(input_data, columns=self.categorical_cols, drop_first=True)
         input_data = input_data.reindex(columns=self.xtrain.columns, fill_value=0)
@@ -74,6 +73,9 @@ class ModelTrainer:
 
 # Streamlit UI
 def main():
+    # Pastikan file df sudah dimuat di sini
+    df = pd.read_csv("path_to_your_data.csv")  # Ubah dengan path yang benar
+
     st.title("Loan Status Prediction")
 
     st.write("Masukkan data untuk memprediksi status pinjaman (Approved atau Rejected):")
