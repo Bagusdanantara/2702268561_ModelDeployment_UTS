@@ -1,25 +1,24 @@
-# 📦 Streamlit App Starter Kit 
-```
-⬆️ (Replace above with your app's name)
-```
+# Loan Status Prediction App
 
-Description of the app ...
+This is a **Streamlit** app that predicts the loan status (Approved or Rejected) based on user input data. The app uses Machine Learning model called **XGBoost** for making predictions based on various factors like age, income, loan amount, and more.
 
-## Demo App
+## How it Works
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://app-starter-kit.streamlit.app/)
+1. **Enter Data**: The user provides personal information like age, income, loan amount, etc.
+2. **Model Processing**: The app processes the input and uses a pre-trained **XGBoost** model to predict the loan status.
+3. **Prediction Results**: The app returns whether the loan will be **Approved** or **Rejected**.
 
-## GitHub Codespaces
+## GitHub Repository
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/streamlit/app-starter-kit?quickstart=1)
+You can access the source code and contribute to the project here:
 
-## Section Heading
+[GitHub Repository](https://github.com/your-username/loan-status-prediction-app)
 
-This is filler text, please replace this with text for this section.
+## Requirements
 
-## Further Reading
-
-This is filler text, please replace this with a explanatory text about further relevant resources for this repo
-- Resource 1
-- Resource 2
-- Resource 3
+The following libraries are required to run this app:
+- `streamlit`
+- `xgboost`
+- `pandas`
+- `scikit-learn`
+- `pickle`
