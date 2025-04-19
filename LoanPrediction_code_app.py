@@ -39,32 +39,37 @@ class ModelTrainer:
         self.model = model
 
     def preprocess_data(self):
-        # Preprocessing, deteksi outlier dan handling missing data
-        self.df['person_real_exp'] = self.df['person_age'] - self.df['person_emp_exp']
-        self.df['person_real_exp'] = self.df.apply(
-            lambda row: row['person_emp_exp'] if row['person_emp_exp'] <= row['person_age']
-            else (row['person_real_exp'] if 16 <= row['person_real_exp'] <= 85 else np.nan),
-            axis=1
-        )
-        self.df['person_real_exp_status'] = self.df['person_real_exp'].apply(
-            lambda x: 'valid' if pd.notna(x) else 'invalid'
-        )
-        self.df['person_income'] = self.df['person_income'].fillna(self.df['person_income'].median())
-        self.df['cleaned_real_gender'] = self.df['person_gender'].replace({'fe male': 'female', 'Male': 'male'})
-        
-        self.X = self.df[self.categorical_cols + self.numerical_cols]
-        self.Y = self.df[self.target_col]
-        
-        self.xtrain, self.xtest, self.ytrain, self.ytest = train_test_split(self.X, self.Y, test_size=0.2, random_state=42)
+    # Preprocessing, deteksi outlier dan handling missing data
+    self.df['person_real_exp'] = self.df['person_age'] - self.df['person_emp_exp']
+    self.df['person_real_exp'] = self.df.apply(
+        lambda row: row['person_emp_exp'] if row['person_emp_exp'] <= row['person_age']
+        else (row['person_real_exp'] if 16 <= row['person_real_exp'] <= 85 else np.nan),
+        axis=1
+    )
+    self.df['person_real_exp_status'] = self.df['person_real_exp'].apply(
+        lambda x: 'valid' if pd.notna(x) else 'invalid'
+    )
+    self.df['person_income'] = self.df['person_income'].fillna(self.df['person_income'].median())
+    self.df['cleaned_real_gender'] = self.df['person_gender'].replace({'fe male': 'female', 'Male': 'male'})
 
-        self.xtrain = pd.get_dummies(self.xtrain, columns=self.categorical_cols, drop_first=True)
-        self.xtest = pd.get_dummies(self.xtest, columns=self.categorical_cols, drop_first=True)
+    self.X = self.df[self.categorical_cols + self.numerical_cols]
+    self.Y = self.df[self.target_col]
+    
+    # Ensure cleaned_real_gender is added to categorical columns
+    if 'cleaned_real_gender' not in self.categorical_cols:
+        self.categorical_cols.append('cleaned_real_gender')
 
-        self.xtest = self.xtest.reindex(columns=self.xtrain.columns, fill_value=0)
+    self.xtrain, self.xtest, self.ytrain, self.ytest = train_test_split(self.X, self.Y, test_size=0.2, random_state=42)
 
-        scaler = StandardScaler()
-        self.xtrain[self.numerical_cols] = scaler.fit_transform(self.xtrain[self.numerical_cols])
-        self.xtest[self.numerical_cols] = scaler.transform(self.xtest[self.numerical_cols])
+    # One-Hot Encoding untuk kolom kategorikal
+    self.xtrain = pd.get_dummies(self.xtrain, columns=self.categorical_cols, drop_first=True)
+    self.xtest = pd.get_dummies(self.xtest, columns=self.categorical_cols, drop_first=True)
+
+    self.xtest = self.xtest.reindex(columns=self.xtrain.columns, fill_value=0)
+
+    scaler = StandardScaler()
+    self.xtrain[self.numerical_cols] = scaler.fit_transform(self.xtrain[self.numerical_cols])
+    self.xtest[self.numerical_cols] = scaler.transform(self.xtest[self.numerical_cols])
 
     def evaluate_model(self):
         y_pred = self.model.predict(self.xtest)
