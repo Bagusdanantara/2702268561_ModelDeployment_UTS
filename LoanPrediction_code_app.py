@@ -13,6 +13,7 @@ for lib in required_libraries:
     except ImportError:
         subprocess.check_call([sys.executable, "-m", "pip", "install", lib])
 
+import streamlit as st
 import joblib
 import pandas as pd
 import numpy as np
