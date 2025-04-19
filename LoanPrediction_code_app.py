@@ -2,54 +2,75 @@ import streamlit as st
 import pickle
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaller
+from sklearn.preprocessing import StandardScaler
+from xgboost import XGBClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
-# Memuat model yang disimpan
-with open('XGB_model.pkl', 'rb') as f:
-    model = pickle.load(f)
+# ModelTrainer Class
+class ModelTrainer:
+    def __init__(self, df, categorical_cols, numerical_cols, target_col):
+        self.df = df
+        self.categorical_cols = categorical_cols
+        self.numerical_cols = numerical_cols
+        self.target_col = target_col
+        self.X = None
+        self.Y = None
+        self.xtrain = None
+        self.xtest = None
+        self.ytrain = None
+        self.ytest = None
+        self.xgb_model = None
 
-# Fungsi untuk preprocessing input dari pengguna
-def preprocess_input(data):
-    # Menghitung 'person_real_exp' berdasarkan usia dan pengalaman kerja
-    data['person_real_exp'] = data['person_age'] - data['person_emp_exp']
+    def preprocess_data(self):
+        # Preprocessing, deteksi outlier dan handling missing data
+        self.df['person_real_exp'] = self.df['person_age'] - self.df['person_emp_exp']
+        self.df['person_real_exp'] = self.df.apply(
+            lambda row: row['person_emp_exp'] if row['person_emp_exp'] <= row['person_age']
+            else (row['person_real_exp'] if 16 <= row['person_real_exp'] <= 85 else np.nan),
+            axis=1
+        )
+        self.df['person_real_exp_status'] = self.df['person_real_exp'].apply(
+            lambda x: 'valid' if pd.notna(x) else 'invalid'
+        )
+        self.df['person_income'] = self.df['person_income'].fillna(self.df['person_income'].median())
+        self.df['cleaned_real_gender'] = self.df['person_gender'].replace({'fe male': 'female', 'Male': 'male'})
+        
+        self.X = self.df[self.categorical_cols + self.numerical_cols]
+        self.Y = self.df[self.target_col]
+        
+        self.xtrain, self.xtest, self.ytrain, self.ytest = train_test_split(self.X, self.Y, test_size=0.2, random_state=42)
 
-    # Validasi nilai person_real_exp (menggunakan threshold 16 dan 85)
-    data['person_real_exp'] = data.apply(
-        lambda row: row['person_emp_exp'] if row['person_emp_exp'] <= row['person_age']
-        else (row['person_real_exp'] if 16 <= row['person_real_exp'] <= 85 else np.nan),
-        axis=1
-    )
+        self.xtrain = pd.get_dummies(self.xtrain, columns=self.categorical_cols, drop_first=True)
+        self.xtest = pd.get_dummies(self.xtest, columns=self.categorical_cols, drop_first=True)
 
-    # Menandai data yang tidak valid (NaN)
-    data['person_real_exp_status'] = data['person_real_exp'].apply(
-        lambda x: 'valid' if pd.notna(x) else 'invalid'
-    )
+        self.xtest = self.xtest.reindex(columns=self.xtrain.columns, fill_value=0)
 
-    # Menggantikan missing value dengan median untuk kolom person_income
-    data['person_income'] = data['person_income'].fillna(data['person_income'].median())
+        scaler = StandardScaler()
+        self.xtrain[self.numerical_cols] = scaler.fit_transform(self.xtrain[self.numerical_cols])
+        self.xtest[self.numerical_cols] = scaler.transform(self.xtest[self.numerical_cols])
 
-    # Mengubah 'fe male' dan 'Male' menjadi 'female' dan 'male' pada gender
-    data['cleaned_real_gender'] = data['person_gender'].replace({'fe male': 'female', 'Male': 'male'})
+    def train_xgboost(self):
+        self.xgb_model = XGBClassifier(n_estimators=100, random_state=42)
+        self.xgb_model.fit(self.xtrain, self.ytrain)
 
-    return data
+    def evaluate_model(self):
+        y_pred = self.xgb_model.predict(self.xtest)
+        print("XGBoost Accuracy:", accuracy_score(self.ytest, y_pred))
+        print("Confusion Matrix (XGBoost):\n", confusion_matrix(self.ytest, y_pred))
+        print("Classification Report (XGBoost):\n", classification_report(self.ytest, y_pred))
 
-# Fungsi untuk melakukan prediksi
-def predict(data):
-    # Melakukan scaling pada kolom numerik
-    numerical_cols = ['person_age', 'person_income', 'person_emp_exp', 'loan_amnt', 'loan_int_rate', 
-                      'loan_percent_income', 'cb_person_cred_hist_length', 'credit_score', 'person_real_exp']
-    
-    scaler = StandardScaler()
-    data[numerical_cols] = scaler.fit_transform(data[numerical_cols])
+    def predict(self, input_data):
+        # Melakukan prediksi dengan model yang sudah dilatih
+        input_data = pd.DataFrame(input_data)
+        input_data = pd.get_dummies(input_data, columns=self.categorical_cols, drop_first=True)
+        input_data = input_data.reindex(columns=self.xtrain.columns, fill_value=0)
+        
+        scaler = StandardScaler()
+        input_data[self.numerical_cols] = scaler.fit_transform(input_data[self.numerical_cols])
 
-    # One-Hot Encoding untuk kolom kategorikal
-    categorical_cols = ['person_gender', 'person_education', 'loan_intent', 'person_home_ownership', 
-                        'previous_loan_defaults_on_file', 'cleaned_real_gender']
-    data = pd.get_dummies(data, columns=categorical_cols, drop_first=True)
-
-    # Prediksi dengan model yang sudah dimuat
-    prediction = model.predict(data)
-    return prediction
+        prediction = self.xgb_model.predict(input_data)
+        return prediction
 
 # Streamlit UI
 def main():
@@ -91,13 +112,15 @@ def main():
             'previous_loan_defaults_on_file': [previous_loan_defaults_on_file]
         }
 
-        input_df = pd.DataFrame(input_data)
-
-        # Preprocessing data
-        input_df = preprocess_input(input_df)
+        # Inisialisasi ModelTrainer dan preprocessing
+        trainer = ModelTrainer(df, categorical_cols=['person_gender', 'person_education', 'loan_intent', 'person_home_ownership', 'previous_loan_defaults_on_file', 'cleaned_real_gender'],
+                               numerical_cols=['person_age', 'person_income', 'person_emp_exp', 'loan_amnt', 'loan_int_rate', 'loan_percent_income', 'cb_person_cred_hist_length', 'credit_score', 'person_real_exp'],
+                               target_col='loan_status')
+        trainer.preprocess_data()
+        trainer.train_xgboost()
 
         # Melakukan prediksi
-        prediction = predict(input_df)
+        prediction = trainer.predict(input_data)
 
         # Menampilkan hasil prediksi
         if prediction == 1:
