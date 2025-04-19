@@ -127,7 +127,7 @@ def main():
     df = pd.DataFrame(data)
 
     # Mengimpor model yang disimpan
-    model = joblib.load('XGB_model.pkl')  # Ganti dengan path yang sesuai ke file model Anda
+    model = joblib.load('/Users/bagusdanantaras/Downloads/XGB_model.pkl')  # Ganti dengan path yang sesuai ke file model Anda
 
     # Inisialisasi ModelTrainer dan preprocessing
     trainer = ModelTrainer(df, 
