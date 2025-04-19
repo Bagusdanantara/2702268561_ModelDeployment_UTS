@@ -12,7 +12,7 @@ This is a **Streamlit** app that predicts the loan status (Approved or Rejected)
 
 You can access the source code and contribute to the project here:
 
-[GitHub Repository](https://github.com/your-username/loan-status-prediction-app)
+[GitHub Repository](https://github.com/Bagusdanantara/2702268561_ModelDeployment_UTS)
 
 ## Requirements
 
