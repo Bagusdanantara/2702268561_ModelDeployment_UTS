@@ -13,8 +13,6 @@ for lib in required_libraries:
     except ImportError:
         subprocess.check_call([sys.executable, "-m", "pip", "install", lib])
 
-# Proceed with imports
-import streamlit as st
 import joblib
 import pandas as pd
 import numpy as np
@@ -25,7 +23,7 @@ from xgboost import XGBClassifier
 
 # ModelTrainer Class
 class ModelTrainer:
-    def __init__(self, df, categorical_cols, numerical_cols, target_col, model):
+    def __init__(self, df, categorical_cols, numerical_cols, target_col, model=None):
         self.df = df
         self.categorical_cols = categorical_cols
         self.numerical_cols = numerical_cols
@@ -36,7 +34,7 @@ class ModelTrainer:
         self.xtest = None
         self.ytrain = None
         self.ytest = None
-        self.model = model
+        self.model = model if model else XGBClassifier(n_estimators=100, random_state=42)
 
     def preprocess_data(self):
         # Preprocessing, deteksi outlier dan handling missing data
@@ -51,39 +49,59 @@ class ModelTrainer:
         )
         self.df['person_income'] = self.df['person_income'].fillna(self.df['person_income'].median())
         self.df['cleaned_real_gender'] = self.df['person_gender'].replace({'fe male': 'female', 'Male': 'male'})
-        self.df = pd.concat([self.df, self.df['cleaned_real_gender']], axis=1)
-
-        self.X = self.df[self.categorical_cols + self.numerical_cols]
-        self.Y = self.df[self.target_col]
-    
+        
+        # Pastikan kolom sudah ada dan digunakan
+        self.X = self.df[self.categorical_cols + self.numerical_cols]  # Gabungkan kolom kategorikal dan numerik
+        self.Y = self.df[self.target_col]  # Kolom target
+        
+        # Membagi data menjadi train dan test set
         self.xtrain, self.xtest, self.ytrain, self.ytest = train_test_split(self.X, self.Y, test_size=0.2, random_state=42)
-    
+
         # One-Hot Encoding untuk kolom kategorikal
         self.xtrain = pd.get_dummies(self.xtrain, columns=self.categorical_cols, drop_first=True)
         self.xtest = pd.get_dummies(self.xtest, columns=self.categorical_cols, drop_first=True)
-    
+
+        # Menyelaraskan kolom antara xtrain dan xtest jika perlu
         self.xtest = self.xtest.reindex(columns=self.xtrain.columns, fill_value=0)
-    
+
+        # Scaling kolom numerik
         scaler = StandardScaler()
         self.xtrain[self.numerical_cols] = scaler.fit_transform(self.xtrain[self.numerical_cols])
         self.xtest[self.numerical_cols] = scaler.transform(self.xtest[self.numerical_cols])
 
+    def train_model(self):
+        # Jika model tidak diinisialisasi, menggunakan XGBoost
+        if self.model is None:
+            self.model = XGBClassifier(n_estimators=100, random_state=42)
+        
+        # Latih model XGBoost
+        self.model.fit(self.xtrain, self.ytrain)
+
     def evaluate_model(self):
+        # Evaluasi model
         y_pred = self.model.predict(self.xtest)
         print("Model Accuracy:", accuracy_score(self.ytest, y_pred))
         print("Confusion Matrix:\n", confusion_matrix(self.ytest, y_pred))
         print("Classification Report:\n", classification_report(self.ytest, y_pred))
 
     def predict(self, input_data):
+        # Melakukan prediksi dengan model yang sudah dilatih
         input_data = pd.DataFrame(input_data)
+        
+        # Pastikan kolom kategorikal di-dummies-kan
         input_data = pd.get_dummies(input_data, columns=self.categorical_cols, drop_first=True)
+        
+        # Menyesuaikan kolom dengan xtrain
         input_data = input_data.reindex(columns=self.xtrain.columns, fill_value=0)
         
+        # Normalisasi untuk kolom numerik
         scaler = StandardScaler()
         input_data[self.numerical_cols] = scaler.fit_transform(input_data[self.numerical_cols])
 
+        # Prediksi status pinjaman
         prediction = self.model.predict(input_data)
         return prediction
+
 
 # Streamlit UI
 def main():
@@ -109,9 +127,9 @@ def main():
     df = pd.DataFrame(data)
 
     # Mengimpor model yang disimpan
-    model = joblib.load('/Users/bagusdanantaras/Downloads/XGB_model.pkl')  # Ganti dengan path yang sesuai ke file model
+    model = joblib.load('XGB_model.pkl')  # Ganti dengan path yang sesuai ke file model Anda
 
-    # Preprocessing dan pelatihan model
+    # Inisialisasi ModelTrainer dan preprocessing
     trainer = ModelTrainer(df, 
                            categorical_cols=['person_gender', 'person_education', 'loan_intent', 'person_home_ownership', 'previous_loan_defaults_on_file', 'cleaned_real_gender'],
                            numerical_cols=['person_age', 'person_income', 'person_emp_exp', 'loan_amnt', 'loan_int_rate', 'loan_percent_income', 'cb_person_cred_hist_length', 'credit_score', 'person_real_exp'],
