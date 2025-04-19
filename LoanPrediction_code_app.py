@@ -74,7 +74,7 @@ class ModelTrainer:
 # Streamlit UI
 def main():
     # Pastikan file df sudah dimuat di sini
-    df = pd.read_csv("path_to_your_data.csv")  # Ubah dengan path yang benar
+    df = pd.read_csv("https://github.com/Bagusdanantara/2702268561_ModelDeployment_UTS/blob/master/Dataset_A_loan.csv")  # Ubah dengan path yang benar
 
     st.title("Loan Status Prediction")
 
