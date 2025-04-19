@@ -172,6 +172,8 @@ def main():
             'loan_intent': [loan_intent],
             'person_home_ownership': [person_home_ownership],
             'previous_loan_defaults_on_file': [previous_loan_defaults_on_file]
+            'cleaned_real_gender': [person_gender.replace('fe male', 'female').replace('Male', 'male')]  # Tambahkan ini
+
         }
 
         # Melakukan prediksi
