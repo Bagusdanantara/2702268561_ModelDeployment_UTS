@@ -51,13 +51,10 @@ class ModelTrainer:
         )
         self.df['person_income'] = self.df['person_income'].fillna(self.df['person_income'].median())
         self.df['cleaned_real_gender'] = self.df['person_gender'].replace({'fe male': 'female', 'Male': 'male'})
-    
+        self.df = pd.concat([self.df, self.df['cleaned_real_gender']], axis=1)
+
         self.X = self.df[self.categorical_cols + self.numerical_cols]
         self.Y = self.df[self.target_col]
-        
-        # Ensure cleaned_real_gender is added to categorical columns
-        if 'cleaned_real_gender' not in self.categorical_cols:
-            self.categorical_cols.append('cleaned_real_gender')
     
         self.xtrain, self.xtest, self.ytrain, self.ytest = train_test_split(self.X, self.Y, test_size=0.2, random_state=42)
     
