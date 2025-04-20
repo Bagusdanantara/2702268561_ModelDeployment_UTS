@@ -87,7 +87,7 @@ class ModelTrainer:
 # Streamlit UI
 def main():
     # Load model (Assuming XGB model is saved as 'XGB_model.pkl')
-    model = joblib.load('XGB_model.pkl')
+    model = joblib.load('/Users/bagusdanantaras/Downloads/XGB_model.pkl')
 
     # Test Data for Two Cases (Test Cases)
     test_case_1 = {
