@@ -124,8 +124,8 @@ def main():
 
     # Simulating the use of ModelTrainer
     trainer = ModelTrainer(df=None, 
-                           categorical_cols=['person_gender', 'person_education', 'loan_intent', 'person_home_ownership', 'previous_loan_defaults_on_file', 'cleaned_real_gender'],
-                           numerical_cols=['person_age', 'person_income', 'person_emp_exp', 'loan_amnt', 'loan_int_rate', 'loan_percent_income', 'cb_person_cred_hist_length', 'credit_score', 'person_real_exp'],
+                           categorical_cols=['person_gender', 'person_education', 'loan_intent', 'person_home_ownership', 'previous_loan_defaults_on_file'],
+                           numerical_cols=['person_age', 'person_income', 'person_emp_exp', 'loan_amnt', 'loan_int_rate', 'loan_percent_income', 'cb_person_cred_hist_length', 'credit_score'],
                            target_col='loan_status',
                            model=model)
 
