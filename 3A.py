@@ -14,17 +14,6 @@ with open("label_encoders.pkl", "rb") as f:
 
 # Fungsi untuk inference (bisa dipanggil dari API nanti)
 def predict_from_input(input_data):
-    """
-    input_data: dictionary, misalnya:
-    {
-        'person_age': 35,
-        'person_emp_exp': 10,
-        'person_income': 50000,
-        'person_home_ownership': 'rent',
-        'person_gender': 'male',
-        ...
-    }
-    """
     # Ubah ke dataframe
     df = pd.DataFrame([input_data])
 
