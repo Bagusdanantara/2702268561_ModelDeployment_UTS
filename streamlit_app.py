@@ -33,7 +33,12 @@ def predict(input_data):
     for col in categorical_cols:
         le = label_encoders.get(col)
         if le:
-            df[col] = le.transform(df[col].astype(str))
+            # Pastikan semua nilai dikenal LabelEncoder
+            df[col] = df[col].apply(lambda x: x if x in le.classes_ else 'unknown')
+            # Tambahkan 'unknown' ke classes_ jika belum ada
+            if 'unknown' not in le.classes_:
+                le.classes_ = np.append(le.classes_, 'unknown')
+            df[col] = le.transform(df[col])
         else:
             raise ValueError(f"Tidak ada encoder untuk kolom: {col}")
 
