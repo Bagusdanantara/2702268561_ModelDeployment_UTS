@@ -48,7 +48,7 @@ def main():
     })
     
     # Load Model dan buat prediksi
-    inference_model = ModelInference("best_model_xgboost.pkl")
+    inference_model = ModelInference("/Users/bagusdanantaras/Downloads/best_model_xgboost.pkl")
     if st.button("Predict"):
         prediction = inference_model.predict(new_data)
         st.write(f"Predicted Loan Status: {'Approved' if prediction[0] == 1 else 'Denied'}")
