@@ -1,63 +1,129 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import pickle
-from sklearn.preprocessing import StandardScaler
 
-# Class untuk load model dan inference
-class ModelInference:
-    def __init__(self, model_path):
-        # Memuat model yang telah disimpan
-        with open(model_path, 'rb') as f:
-            self.model = pickle.load(f)
-    
-    def preprocess(self, input_data):
-       #memisahkan data categorical dan numerical
-        numeric_data = input_data.select_dtypes(include=['float64', 'int64'])
-        categorical_data = input_data.select_dtypes(include=['object'])
-    
-        # Scaling
-        scaler = StandardScaler()
-        numeric_data_scaled = scaler.fit_transform(numeric_data)
+# Load model dan tools preprocessing
+with open("/Users/bagusdanantaras/Downloads/xgb_model-2.pkl", "rb") as f:
+    model = pickle.load(f)
 
-        #one-hot encoding pada categorical data
-        categorical_data_encoded = pd.get_dummies(categorical_data, drop_first=True)
-        #merge data numeric yg sudah discale dan data categorical yg sudah di encode
-        final_data = pd.concat([pd.DataFrame(numeric_data_scaled, columns=numeric_data.columns), categorical_data_encoded], axis=1)
-        return final_data
-    
-    def predict(self, input_data):
-        # Mengambil input, lakukan preprocessing, kemudian prediksi
-        processed_data = self.preprocess(input_data)
-        prediction = self.model.predict(processed_data)
-        return prediction
+with open("/Users/bagusdanantaras/Downloads/scaler.pkl", "rb") as f:
+    scaler = pickle.load(f)
 
-# Fungsi utama untuk menjalankan aplikasi Streamlit
-def main():
-    st.title('Loan Status Prediction App')
+with open("/Users/bagusdanantaras/Downloads/label_encoders.pkl", "rb") as f:
+    label_encoders = pickle.load(f)
 
-    # Input Form
-    person_age = st.number_input("Enter Age:", min_value=18, max_value=100, value=30)
-    person_income = st.number_input("Enter Income:", min_value=1000, max_value=1000000, value=50000)
-    loan_amnt = st.number_input("Enter Loan Amount:", min_value=1000, max_value=500000, value=10000)
-    loan_int_rate = st.number_input("Enter Loan Interest Rate (%):", min_value=1.0, max_value=30.0, value=12.0)
-    credit_score = st.number_input("Enter Credit Score:", min_value=300, max_value=850, value=650)
-    person_gender = st.selectbox("Select Gender:", ['male', 'female'], index=1)
+# Fungsi prediksi
+def predict(input_data):
+    df = pd.DataFrame([input_data])
 
-    # Membuat DataFrame untuk input
-    new_data = pd.DataFrame({
-        'person_age': [person_age],
-        'person_income': [person_income],
-        'loan_amnt': [loan_amnt],
-        'loan_int_rate': [loan_int_rate],
-        'credit_score': [credit_score],
-        'person_gender': [person_gender]
-    })
-    
-    # Load Model dan buat prediksi
-    inference_model = ModelInference("/Users/bagusdanantaras/Downloads/best_model_xgboost.pkl")
-    if st.button("Predict"):
-        prediction = inference_model.predict(new_data)
-        st.write(f"Predicted Loan Status: {'Approved' if prediction[0] == 1 else 'Denied'}")
+    # Feature engineering
+    df['person_real_exp'] = df['person_age'] - df['person_emp_exp']
+    df['person_real_exp'] = df.apply(
+        lambda row: row['person_emp_exp'] if row['person_emp_exp'] <= row['person_age']
+        else (row['person_real_exp'] if 16 <= row['person_real_exp'] <= 85 else np.nan),
+        axis=1
+    )
+    df['person_real_exp'] = df['person_real_exp'].fillna(df['person_real_exp'].median())
 
-if __name__ == "__main__":
-    main()
+    numerical_cols = ['person_income', 'person_age', 'person_emp_exp', 'person_real_exp']
+    categorical_cols = [col for col in df.columns if col not in numerical_cols]
+
+    # Encoding kategori
+    for col in categorical_cols:
+        le = label_encoders.get(col)
+        if le:
+            df[col] = le.transform(df[col].astype(str))
+        else:
+            raise ValueError(f"Tidak ada encoder untuk kolom: {col}")
+
+    # Scaling
+    df[numerical_cols] = scaler.transform(df[numerical_cols].astype(float))
+
+    # Gabungkan fitur akhir
+    final_cols = categorical_cols + numerical_cols
+    X = df[final_cols]
+
+    # Prediksi
+    pred = model.predict(X.values)[0]
+    label = label_encoders['loan_status'].inverse_transform([pred])[0]
+
+    return label
+
+# UI Streamlit
+st.title("📊 XGBoost Loan Prediction App")
+st.write("Masukkan data peminjam di bawah ini:")
+
+# Input form
+with st.form("prediction_form"):
+    person_age = st.number_input("Usia", min_value=18, max_value=100, value=30)
+    person_emp_exp = st.number_input("Lama Bekerja (tahun)", min_value=0, max_value=80, value=5)
+    person_income = st.number_input("Pendapatan per Tahun", value=50000)
+    person_home_ownership = st.selectbox("Status Kepemilikan Rumah", ['rent', 'own', 'mortgage', 'other'])
+    person_gender = st.selectbox("Jenis Kelamin", ['male', 'female'])
+    loan_intent = st.selectbox("Tujuan Pinjaman", ['personal', 'education', 'medical', 'venture', 'home', 'debt_consolidation'])
+    loan_grade = st.selectbox("Grade Pinjaman", ['A', 'B', 'C', 'D', 'E', 'F', 'G'])
+    loan_amnt = st.number_input("Jumlah Pinjaman", value=10000)
+    loan_int_rate = st.number_input("Suku Bunga (%)", value=13.5)
+    loan_percent_income = st.number_input("Persentase Pinjaman terhadap Pendapatan", value=0.25)
+    cb_person_default_on_file = st.selectbox("Pernah Default?", ['n', 'y'])
+    cb_person_cred_hist_length = st.number_input("Lama Riwayat Kredit (tahun)", value=5)
+
+    submitted = st.form_submit_button("Prediksi")
+
+    if submitted:
+        input_data = {
+            'person_age': person_age,
+            'person_emp_exp': person_emp_exp,
+            'person_income': person_income,
+            'person_home_ownership': person_home_ownership,
+            'person_gender': person_gender,
+            'loan_intent': loan_intent,
+            'loan_grade': loan_grade,
+            'loan_amnt': loan_amnt,
+            'loan_int_rate': loan_int_rate,
+            'loan_percent_income': loan_percent_income,
+            'cb_person_default_on_file': cb_person_default_on_file,
+            'cb_person_cred_hist_length': cb_person_cred_hist_length
+        }
+
+        result = predict(input_data)
+        st.success(f"🎯 Hasil Prediksi: **{result.upper()}**")
+
+# Tambahkan test case (Demo)
+st.sidebar.header("🔍 Test Case")
+if st.sidebar.button("🧪 Jalankan Test Case 1"):
+    test_input_1 = {
+        'person_age': 35,
+        'person_emp_exp': 10,
+        'person_income': 60000,
+        'person_home_ownership': 'own',
+        'person_gender': 'male',
+        'loan_intent': 'education',
+        'loan_grade': 'C',
+        'loan_amnt': 12000,
+        'loan_int_rate': 11.5,
+        'loan_percent_income': 0.2,
+        'cb_person_default_on_file': 'n',
+        'cb_person_cred_hist_length': 7
+    }
+    prediction = predict(test_input_1)
+    st.sidebar.write("✅ Prediksi Test Case 1:", prediction)
+
+if st.sidebar.button("🧪 Jalankan Test Case 2"):
+    test_input_2 = {
+        'person_age': 45,
+        'person_emp_exp': 25,
+        'person_income': 90000,
+        'person_home_ownership': 'mortgage',
+        'person_gender': 'female',
+        'loan_intent': 'home',
+        'loan_grade': 'B',
+        'loan_amnt': 30000,
+        'loan_int_rate': 9.5,
+        'loan_percent_income': 0.33,
+        'cb_person_default_on_file': 'y',
+        'cb_person_cred_hist_length': 15
+    }
+    prediction = predict(test_input_2)
+    st.sidebar.write("✅ Prediksi Test Case 2:", prediction)
