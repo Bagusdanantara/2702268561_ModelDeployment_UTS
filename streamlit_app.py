@@ -11,11 +11,19 @@ class ModelInference:
             self.model = pickle.load(f)
     
     def preprocess(self, input_data):
-        # Lakukan preprocessing sesuai yang diperlukan, misalnya:
-        # Scaling, One-Hot Encoding, dll
+       #memisahkan data categorical dan numerical
+        numeric_data = input_data.select_dtypes(include=['float64', 'int64'])
+        categorical_data = input_data.select_dtypes(include=['object'])
+        
+        # Scaling
         scaler = StandardScaler()
         scaled_data = scaler.fit_transform(input_data)
-        return scaled_data
+
+        #one-hot encoding pada categorical data
+        categorical_data_encoded = pd.get_dummies(categorical_data, drop_first=True)
+        #merge data numeric yg sudah discale dan data categorical yg sudah di encode
+        final_data = pd.concat([pd.DataFrame(numeric_data_scaled, columns=numeric_data.columns), categorical_data_encoded], axis=1)
+        return final_data
     
     def predict(self, input_data):
         # Mengambil input, lakukan preprocessing, kemudian prediksi
@@ -48,7 +56,7 @@ def main():
     })
     
     # Load Model dan buat prediksi
-    inference_model = ModelInference("best_model_xgboost.pkl")
+    inference_model = ModelInference("/Users/bagusdanantaras/Downloads/best_model_xgboost.pkl")
     if st.button("Predict"):
         prediction = inference_model.predict(new_data)
         st.write(f"Predicted Loan Status: {'Approved' if prediction[0] == 1 else 'Denied'}")
