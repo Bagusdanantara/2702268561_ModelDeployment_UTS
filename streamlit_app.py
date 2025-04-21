@@ -14,10 +14,10 @@ class ModelInference:
        #memisahkan data categorical dan numerical
         numeric_data = input_data.select_dtypes(include=['float64', 'int64'])
         categorical_data = input_data.select_dtypes(include=['object'])
-        
+    
         # Scaling
         scaler = StandardScaler()
-        scaled_data = scaler.fit_transform(input_data)
+        numeric_data_scaled = scaler.fit_transform(numeric_data)
 
         #one-hot encoding pada categorical data
         categorical_data_encoded = pd.get_dummies(categorical_data, drop_first=True)
@@ -41,8 +41,6 @@ def main():
     loan_amnt = st.number_input("Enter Loan Amount:", min_value=1000, max_value=500000, value=10000)
     loan_int_rate = st.number_input("Enter Loan Interest Rate (%):", min_value=1.0, max_value=30.0, value=12.0)
     credit_score = st.number_input("Enter Credit Score:", min_value=300, max_value=850, value=650)
-
-    # Simulasi input kategorikal (misalnya bisa menggunakan dropdown untuk memilih gender, status rumah, dll)
     person_gender = st.selectbox("Select Gender:", ['male', 'female'], index=1)
 
     # Membuat DataFrame untuk input
