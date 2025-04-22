@@ -34,7 +34,7 @@ numerical_columns = [
 ]
 
 def predict(input_data: dict) -> str:
-    #  Convert input dict to DataFrame
+    # Convert input dict to DataFrame
     df = pd.DataFrame([input_data])
 
     # Feature engineering: create person_real_exp
@@ -54,14 +54,16 @@ def predict(input_data: dict) -> str:
         le = label_encoders.get(col)
         if not le:
             raise ValueError(f"Encoder for '{col}' not found!")
-        # 🍂 Replace unseen values with 'unknown'
+        # Replace unseen values with 'unknown'
         df[col] = df[col].apply(lambda x: x if x in le.classes_ else 'unknown')
         if 'unknown' not in le.classes_:
             le.classes_ = np.append(le.classes_, 'unknown')
         df[col] = le.transform(df[col])
 
-    # Scale numeric features
-df[numerical_columns] = scaler.transform(df[numerical_columns])
+    # Scale numeric features using numpy array to avoid feature name mismatch
+    num_array = scaler.transform(df[numerical_columns].values)
+    for idx, col in enumerate(numerical_columns):
+        df[col] = num_array[:, idx]
 
     # Prepare array for model input
     cat_vals = df[categorical_columns].values
@@ -77,15 +79,15 @@ df[numerical_columns] = scaler.transform(df[numerical_columns])
 
 # Streamlit App Configuration
 st.set_page_config(
-    page_title='🌟 Loan Approval Predictor',
+    page_title=' Loan Approval Predictor',
     layout='centered'
 )
 
-# App Header with Emoji
-st.title('🌟 Loan Approval Prediction 🌟')
+# App Header
+st.title('📊 Loan Approval Prediction')
 st.markdown('**Isi form berikut untuk mendapatkan prediksi persetujuan pinjaman!** ✍️')
 
-# Main Input Form
+# 🖥️ Main Input Form
 with st.form('input_form'):
     st.subheader('🖊️ Masukkan Detail Peminjam')
     inputs = {}
@@ -113,7 +115,7 @@ if submit:
     st.success(f'✅ Hasil Prediksi: **{result}**')
 
 # Sidebar Test Cases
-st.sidebar.title('🧪 Test Cases')
+st.sidebar.title('Test Cases')
 
 # Inisialisasi hasil test case
 tc1_result = None
@@ -146,4 +148,3 @@ if tc1_result is not None:
     st.info(f'🧪 Test Case 1 Prediksi: {tc1_result}')
 if tc2_result is not None:
     st.info(f'🧪 Test Case 2 Prediksi: {tc2_result}')
-
