@@ -6,7 +6,7 @@ st.set_page_config(
 )
 import pandas as pd       # 📊 Data manipulation
 import numpy as np        # 🔢 Numerical operations
-import pickle             # 🗄️ Model serialization             # 🗄️ Model serialization
+import pickle             # 🗄️ Model serialization
 
 # 🎁 Load the trained model and preprocessing objects
 st.sidebar.header('🔄 Upload Model Files')
@@ -43,51 +43,46 @@ numerical_columns = [
     'credit_score'
 ]
 
-def predict(input_data: dict) -> str:
-    # 📝 Convert input dict to DataFrame
-    df = pd.DataFrame([input_data])
+# 🔄 Initialize default input values in session state
+default_vals = {
+    'person_age': 30,
+    'person_emp_exp': 5,
+    'person_income': 50000,
+    'loan_amnt': 10000,
+    'loan_int_rate': 13.5,
+    'loan_percent_income': 0.25,
+    'cb_person_cred_hist_length': 5,
+    'credit_score': 650,
+    'person_gender': label_encoders['person_gender'].classes_[0],
+    'person_education': label_encoders['person_education'].classes_[0],
+    'loan_intent': label_encoders['loan_intent'].classes_[0],
+    'person_home_ownership': label_encoders['person_home_ownership'].classes_[0],
+    'previous_loan_defaults_on_file': label_encoders['previous_loan_defaults_on_file'].classes_[0]
+}
+for key, val in default_vals.items():
+    if key not in st.session_state:
+        st.session_state[key] = val
 
-    # 🛠️ Feature engineering: create person_real_exp
-    df['person_real_exp'] = df['person_age'] - df['person_emp_exp']
-    df['person_real_exp'] = df.apply(
-        lambda row: row['person_emp_exp'] if row['person_emp_exp'] <= row['person_age'] else (
-            row['person_real_exp'] if 16 <= row['person_real_exp'] <= 85 else np.nan
-        ),
-        axis=1
-    )
-    # 🎯 Impute missing feature with training mean
-    mean_val = scaler.mean_[numerical_columns.index('person_real_exp')]
-    df['person_real_exp'] = df['person_real_exp'].fillna(mean_val)
-
-    # 🔄 Encode categorical features with saved encoders
-    for col in categorical_columns:
-        le = label_encoders.get(col)
-        if not le:
-            raise ValueError(f"Encoder for '{col}' not found!")
-        # 🍂 Replace unseen values with 'unknown'
-        df[col] = df[col].apply(lambda x: x if x in le.classes_ else 'unknown')
-        if 'unknown' not in le.classes_:
-            le.classes_ = np.append(le.classes_, 'unknown')
-        df[col] = le.transform(df[col])
-
-    # 🔢 Scale numeric features using numpy array to avoid feature name mismatch
-    num_array = scaler.transform(df[numerical_columns].values)
-    for idx, col in enumerate(numerical_columns):
-        df[col] = num_array[:, idx]
-
-    # 👉 Prepare array for model input
-    cat_vals = df[categorical_columns].values
-    num_vals = df[numerical_columns].values
-    X_input = np.hstack([cat_vals, num_vals])
-
-    # 🎯 Predict and decode
-    pred = model.predict(X_input)[0]
-    target_le = label_encoders.get('loan_status')
-    if target_le:
-        return target_le.inverse_transform([pred])[0]
-    return str(pred)
-
-# App configuration already set at top. Skipping repeated set_page_config.
+# 🧪 Sidebar: Test Cases - set session state values when clicked
+tc1 = {
+    'person_age': 35, 'person_emp_exp': 10, 'person_income': 60000,
+    'loan_amnt': 15000, 'loan_int_rate': 11.5, 'loan_percent_income': 0.2,
+    'cb_person_cred_hist_length': 7, 'credit_score': 700,
+    'person_gender': 'male', 'person_education': 'Bachelor', 'loan_intent': 'EDUCATION',
+    'person_home_ownership': 'OWN', 'previous_loan_defaults_on_file': 'No'
+}
+tc2 = {
+    'person_age': 45, 'person_emp_exp': 20, 'person_income': 90000,
+    'loan_amnt': 30000, 'loan_int_rate': 9.5, 'loan_percent_income': 0.33,
+    'cb_person_cred_hist_length': 15, 'credit_score': 750,
+    'person_gender': 'female', 'person_education': 'Master', 'loan_intent': 'HOME',
+    'person_home_ownership': 'MORTGAGE', 'previous_loan_defaults_on_file': 'Yes'
+}
+st.sidebar.title('🧪 Test Cases')
+if st.sidebar.button('Load Test Case 1'):
+    for k, v in tc1.items(): st.session_state[k] = v
+if st.sidebar.button('Load Test Case 2'):
+    for k, v in tc2.items(): st.session_state[k] = v
 
 # 🎨 App Header with Emoji
 st.title('🌟 Loan Approval Prediction 🌟')
@@ -97,21 +92,43 @@ st.markdown('**Isi form berikut untuk mendapatkan prediksi persetujuan pinjaman!
 with st.form('input_form'):
     st.subheader('🖊️ Masukkan Detail Peminjam')
     inputs = {}
-    # Numeric inputs
-    inputs['person_age'] = st.number_input('Usia (tahun)', min_value=18, max_value=100, value=30)
-    inputs['person_emp_exp'] = st.number_input('Lama Bekerja (tahun)', min_value=0, max_value=50, value=5)
-    inputs['person_income'] = st.number_input('Pendapatan Tahunan', value=50000)
-    inputs['loan_amnt'] = st.number_input('Jumlah Pinjaman', value=10000)
-    inputs['loan_int_rate'] = st.number_input('Suku Bunga (%)', value=13.5)
-    inputs['loan_percent_income'] = st.number_input('Persentase Pinjaman terhadap Pendapatan', value=0.25)
-    inputs['cb_person_cred_hist_length'] = st.number_input('Lama Riwayat Kredit (tahun)', value=5)
-    inputs['credit_score'] = st.number_input('Credit Score', min_value=300, max_value=900, value=650)
-    # Categorical inputs
-    inputs['person_gender'] = st.selectbox('Jenis Kelamin', label_encoders['person_gender'].classes_.tolist())
-    inputs['person_education'] = st.selectbox('Pendidikan', label_encoders['person_education'].classes_.tolist())
-    inputs['loan_intent'] = st.selectbox('Tujuan Pinjaman', label_encoders['loan_intent'].classes_.tolist())
-    inputs['person_home_ownership'] = st.selectbox('Kepemilikan Rumah', label_encoders['person_home_ownership'].classes_.tolist())
-    inputs['previous_loan_defaults_on_file'] = st.selectbox('Pernah Default Sebelumnya?', label_encoders['previous_loan_defaults_on_file'].classes_.tolist())
+    # Numeric inputs with session state defaults
+    inputs['person_age'] = st.number_input('Usia (tahun)', min_value=18, max_value=100,
+                                          value=st.session_state['person_age'], key='person_age')
+    inputs['person_emp_exp'] = st.number_input('Lama Bekerja (tahun)', min_value=0, max_value=50,
+                                               value=st.session_state['person_emp_exp'], key='person_emp_exp')
+    inputs['person_income'] = st.number_input('Pendapatan Tahunan',
+                                              value=st.session_state['person_income'], key='person_income')
+    inputs['loan_amnt'] = st.number_input('Jumlah Pinjaman',
+                                          value=st.session_state['loan_amnt'], key='loan_amnt')
+    inputs['loan_int_rate'] = st.number_input('Suku Bunga (%)',
+                                             value=st.session_state['loan_int_rate'], key='loan_int_rate')
+    inputs['loan_percent_income'] = st.number_input('Persentase Pinjaman terhadap Pendapatan',
+                                                   value=st.session_state['loan_percent_income'], key='loan_percent_income')
+    inputs['cb_person_cred_hist_length'] = st.number_input('Lama Riwayat Kredit (tahun)',
+                                                          value=st.session_state['cb_person_cred_hist_length'],
+                                                          key='cb_person_cred_hist_length')
+    inputs['credit_score'] = st.number_input('Credit Score', min_value=300, max_value=900,
+                                              value=st.session_state['credit_score'], key='credit_score')
+    # Categorical inputs with session state
+    inputs['person_gender'] = st.selectbox('Jenis Kelamin', label_encoders['person_gender'].classes_,
+                                           index=list(label_encoders['person_gender'].classes_).index(
+                                               st.session_state['person_gender']), key='person_gender')
+    inputs['person_education'] = st.selectbox('Pendidikan', label_encoders['person_education'].classes_,
+                                              index=list(label_encoders['person_education'].classes_).index(
+                                                  st.session_state['person_education']), key='person_education')
+    inputs['loan_intent'] = st.selectbox('Tujuan Pinjaman', label_encoders['loan_intent'].classes_,
+                                         index=list(label_encoders['loan_intent'].classes_).index(
+                                             st.session_state['loan_intent']), key='loan_intent')
+    inputs['person_home_ownership'] = st.selectbox('Kepemilikan Rumah', label_encoders['person_home_ownership'].classes_,
+                                                   index=list(label_encoders['person_home_ownership'].classes_).index(
+                                                       st.session_state['person_home_ownership']),
+                                                   key='person_home_ownership')
+    inputs['previous_loan_defaults_on_file'] = st.selectbox('Pernah Default Sebelumnya?',
+                                                            label_encoders['previous_loan_defaults_on_file'].classes_,
+                                                            index=list(label_encoders['previous_loan_defaults_on_file'].classes_)
+                                                            .index(st.session_state['previous_loan_defaults_on_file']),
+                                                            key='previous_loan_defaults_on_file')
 
     submit = st.form_submit_button('🚀 Prediksi')
 
@@ -119,40 +136,3 @@ with st.form('input_form'):
 if submit:
     result = predict(inputs)
     st.success(f'✅ Hasil Prediksi: **{result}**')
-
-# 🧪 Sidebar Test Cases
-st.sidebar.title('🧪 Test Cases')
-
-# Inisialisasi hasil test case
-tc1_result = None
-tc2_result = None
-
-# Tekan untuk menjalankan Test Case 1
-# Definisi data untuk Test Case 1
-tc1_data = {
-    'person_age': 35, 'person_emp_exp': 10, 'person_income': 60000,
-    'loan_amnt': 15000, 'loan_int_rate': 11.5, 'loan_percent_income': 0.2,
-    'cb_person_cred_hist_length': 7, 'credit_score': 700,
-    'person_gender': 'male', 'person_education': 'Bachelor', 'loan_intent': 'EDUCATION',
-    'person_home_ownership': 'OWN', 'previous_loan_defaults_on_file': 'No'
-}
-if st.sidebar.button('Test Case 1'):
-    tc1_result = predict(tc1_data)
-
-# Tekan untuk menjalankan Test Case 2
-# Definisi data untuk Test Case 2
-tc2_data = {
-    'person_age': 45, 'person_emp_exp': 20, 'person_income': 90000,
-    'loan_amnt': 30000, 'loan_int_rate': 9.5, 'loan_percent_income': 0.33,
-    'cb_person_cred_hist_length': 15, 'credit_score': 750,
-    'person_gender': 'female', 'person_education': 'Master', 'loan_intent': 'HOME',
-    'person_home_ownership': 'MORTGAGE', 'previous_loan_defaults_on_file': 'Yes'
-}
-if st.sidebar.button('Test Case 2'):
-    tc2_result = predict(tc2_data)
-
-# Tampilkan hasil Test Case di area utama jika ada
-if tc1_result is not None:
-    st.info(f'🧪 Test Case 1 Prediksi: {tc1_result}')
-if tc2_result is not None:
-    st.info(f'🧪 Test Case 2 Prediksi: {tc2_result}')
