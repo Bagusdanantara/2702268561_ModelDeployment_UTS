@@ -22,15 +22,16 @@ categorical_columns = [
     'previous_loan_defaults_on_file'
 ]
 numerical_columns = [
-    'person_age',
+    'person_age',                         
     'person_income',
     'person_emp_exp',
-    'person_real_exp',
     'loan_amnt',
+    'person_real_exp',
     'loan_int_rate',
     'loan_percent_income',
     'cb_person_cred_hist_length',
-    'credit_score'
+    'credit_score',
+    'person_real_exp
 ]
 
 def predict(input_data: dict):
