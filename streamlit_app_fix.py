@@ -124,7 +124,7 @@ tc2 = {
     'person_home_ownership': 'MORTGAGE', 'previous_loan_defaults_on_file': 'Yes'
 }
 
-st.sidebar.title('🧪 Test Cases')('🧪 Test Cases')
+st.sidebar.title('🧪 Test Cases')
 
 # Capture button clicks
 tc1_clicked = st.sidebar.button('Load Test Case 1')
