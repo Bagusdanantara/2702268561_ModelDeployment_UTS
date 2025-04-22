@@ -22,16 +22,15 @@ categorical_columns = [
     'previous_loan_defaults_on_file'
 ]
 numerical_columns = [
-    'person_age',                         
+    'person_age',
     'person_income',
     'person_emp_exp',
-    'loan_amnt',
     'person_real_exp',
+    'loan_amnt',
     'loan_int_rate',
     'loan_percent_income',
     'cb_person_cred_hist_length',
-    'credit_score',
-    'person_real_exp'
+    'credit_score'
 ]
 
 def predict(input_data: dict):
@@ -65,8 +64,21 @@ def predict(input_data: dict):
     # Scale numerical features
     df[numerical_columns] = scaler.transform(df[numerical_columns])
 
-    # Predict
-    pred = model.predict(df)[0]
+    # Reorder columns to match training
+    X = df[categorical_columns + numerical_columns]
+
+        # Predict using correctly ordered features
+    st.write("Debug: X.columns", X.columns.tolist())
+    st.write("Debug: Model.feature_names_in_", model.feature_names_in_.tolist())
+    missing_in_X = set(model.feature_names_in_) - set(X.columns)
+    if missing_in_X:
+        st.write("Missing in X (features the model expects but not in input):", missing_in_X)
+    extra_in_X = set(X.columns) - set(model.feature_names_in_)
+    if extra_in_X:
+        st.write("Extra in X (input features not expected by model):", extra_in_X)
+
+    pred = model.predict(X)[0]
+
     # Decode prediction
     target_le = label_encoders.get('loan_status')
     if target_le:
@@ -153,3 +165,4 @@ if st.sidebar.button('Test Case 2'):
         'previous_loan_defaults_on_file': 'Yes'
     }
     st.sidebar.write('Prediksi TC2:', predict(tc2))
+
