@@ -1,21 +1,19 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import pickle
+import streamlit as st  # 🚀 Streamlit framework
+import pandas as pd       # 📊 Data manipulation
+import numpy as np        # 🔢 Numerical operations
+import pickle             # 🗄️ Model serialization
 
-@st.cache_resource
-def load_artifacts():
-    with open('xgb_model.pkl', 'rb') as f:
-        model = pickle.load(f)
-    with open('scaler.pkl', 'rb') as f:
-        scaler = pickle.load(f)
-    with open('label_encoders.pkl', 'rb') as f:
-        label_encoders = pickle.load(f)
-    return model, scaler, label_encoders
+# 🎁 Load the trained model and preprocessing objects
+with open('xgb_model.pkl', 'rb') as f:
+    model = pickle.load(f)
+# 🔧 Load scaler for numeric features
+with open('scaler.pkl', 'rb') as f:
+    scaler = pickle.load(f)
+# 🏷️ Load encoders for categorical features
+with open('label_encoders.pkl', 'rb') as f:
+    label_encoders = pickle.load(f)
 
-model, scaler, label_encoders = load_artifacts()
-
-# Define feature lists (must match training!)
+# ✨ Define feature lists (must match training!)
 categorical_columns = [
     'person_gender',
     'person_education',
@@ -36,10 +34,10 @@ numerical_columns = [
 ]
 
 def predict(input_data: dict) -> str:
-    # Convert input dict to DataFrame
+    # 📝 Convert input dict to DataFrame
     df = pd.DataFrame([input_data])
 
-    # Feature engineering: create person_real_exp
+    # 🛠️ Feature engineering: create person_real_exp
     df['person_real_exp'] = df['person_age'] - df['person_emp_exp']
     df['person_real_exp'] = df.apply(
         lambda row: row['person_emp_exp'] if row['person_emp_exp'] <= row['person_age'] else (
@@ -47,46 +45,46 @@ def predict(input_data: dict) -> str:
         ),
         axis=1
     )
-    # Impute missing feature with training mean
+    # 🎯 Impute missing feature with training mean
     mean_val = scaler.mean_[numerical_columns.index('person_real_exp')]
     df['person_real_exp'] = df['person_real_exp'].fillna(mean_val)
 
-    # Encode categorical features with saved encoders
+    # 🔄 Encode categorical features with saved encoders
     for col in categorical_columns:
         le = label_encoders.get(col)
         if not le:
             raise ValueError(f"Encoder for '{col}' not found!")
-        # Replace unseen values with 'unknown'
+        # 🍂 Replace unseen values with 'unknown'
         df[col] = df[col].apply(lambda x: x if x in le.classes_ else 'unknown')
         if 'unknown' not in le.classes_:
             le.classes_ = np.append(le.classes_, 'unknown')
         df[col] = le.transform(df[col])
 
-    # Scale numeric features using numpy array to avoid feature name mismatch
+    # 🔢 Scale numeric features using numpy array to avoid feature name mismatch
     num_array = scaler.transform(df[numerical_columns].values)
     for idx, col in enumerate(numerical_columns):
         df[col] = num_array[:, idx]
 
-    # Prepare array for model input
+    # 👉 Prepare array for model input
     cat_vals = df[categorical_columns].values
     num_vals = df[numerical_columns].values
     X_input = np.hstack([cat_vals, num_vals])
 
-    # Predict and decode
+    # 🎯 Predict and decode
     pred = model.predict(X_input)[0]
     target_le = label_encoders.get('loan_status')
     if target_le:
         return target_le.inverse_transform([pred])[0]
     return str(pred)
 
-# Streamlit App Configuration
+# 🚀 Streamlit App Configuration
 st.set_page_config(
-    page_title=' Loan Approval Predictor',
+    page_title='🌟 Loan Approval Predictor',
     layout='centered'
 )
 
-# App Header
-st.title('📊 Loan Approval Prediction')
+# 🎨 App Header with Emoji
+st.title('🌟 Loan Approval Prediction 🌟')
 st.markdown('**Isi form berikut untuk mendapatkan prediksi persetujuan pinjaman!** ✍️')
 
 # 🖥️ Main Input Form
@@ -111,13 +109,13 @@ with st.form('input_form'):
 
     submit = st.form_submit_button('🚀 Prediksi')
 
-# Show result after submission
+# 🎉 Show result after submission
 if submit:
     result = predict(inputs)
     st.success(f'✅ Hasil Prediksi: **{result}**')
 
-# Sidebar Test Cases
-st.sidebar.title('Test Cases')
+# 🧪 Sidebar Test Cases
+st.sidebar.title('🧪 Test Cases')
 
 # Inisialisasi hasil test case
 tc1_result = None
