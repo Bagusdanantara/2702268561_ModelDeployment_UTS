@@ -3,9 +3,9 @@ import pandas as pd
 import numpy as np
 import pickle
 
-@st.cache(allow_output_mutation=True)
+@st.cache_resource
 def load_artifacts():
-    with open('xgb_model_real.pkl', 'rb') as f:
+    with open('xgb_model.pkl', 'rb') as f:
         model = pickle.load(f)
     with open('scaler.pkl', 'rb') as f:
         scaler = pickle.load(f)
