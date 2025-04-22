@@ -4,14 +4,19 @@ import numpy as np        # 🔢 Numerical operations
 import pickle             # 🗄️ Model serialization
 
 # 🎁 Load the trained model and preprocessing objects
-with open('xgb_model.pkl', 'rb') as f:
-    model = pickle.load(f)
-# 🔧 Load scaler for numeric features
-with open('scaler.pkl', 'rb') as f:
-    scaler = pickle.load(f)
-# 🏷️ Load encoders for categorical features
-with open('label_encoders.pkl', 'rb') as f:
-    label_encoders = pickle.load(f)
+st.sidebar.header('🔄 Upload Model Files')
+model_file = st.sidebar.file_uploader('Upload model (xgb_model.pkl)', type=['pkl'])
+scaler_file = st.sidebar.file_uploader('Upload scaler (scaler.pkl)', type=['pkl'])
+encoders_file = st.sidebar.file_uploader('Upload label encoders (label_encoders.pkl)', type=['pkl'])
+
+if not model_file or not scaler_file or not encoders_file:
+    st.sidebar.warning('⚠️ Silakan upload ketiga file pkl di atas untuk menjalankan aplikasi.')
+    st.stop()
+
+# Load from uploaded files
+model = pickle.load(model_file)
+scaler = pickle.load(scaler_file)
+label_encoders = pickle.load(encoders_file)
 
 # ✨ Define feature lists (must match training!)
 categorical_columns = [
