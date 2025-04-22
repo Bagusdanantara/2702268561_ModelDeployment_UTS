@@ -13,7 +13,29 @@ with open('/Users/bagusdanantaras/Downloads/scaler_real.pkl', 'rb') as f:
 with open('/Users/bagusdanantaras/Downloads/label_encoders_real.pkl', 'rb') as f:
     label_encoders = pickle.load(f)
 
-# Define feature columns
+# Define feature columns for inference
+categorical_columns = [
+    'person_gender',
+    'person_education',
+    'loan_intent',
+    'person_home_ownership',
+    'previous_loan_defaults_on_file'
+]
+# Numerical columns are taken from scaler to ensure consistent order
+numerical_columns = scaler.feature_names_in_.tolist()
+
+# Define form fields separately
+form_numerical_fields = [
+    'person_age',
+    'person_emp_exp',
+    'person_income',
+    'loan_amnt',
+    'loan_int_rate',
+    'loan_percent_income',
+    'cb_person_cred_hist_length',
+    'credit_score'
+]
+
 categorical_columns = [
     'person_gender',
     'person_education',
@@ -165,4 +187,3 @@ if st.sidebar.button('Test Case 2'):
         'previous_loan_defaults_on_file': 'Yes'
     }
     st.sidebar.write('Prediksi TC2:', predict(tc2))
-
