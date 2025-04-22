@@ -31,7 +31,7 @@ numerical_columns = [
     'loan_percent_income',
     'cb_person_cred_hist_length',
     'credit_score',
-    'person_real_exp
+    'person_real_exp'
 ]
 
 def predict(input_data: dict):
