@@ -6,34 +6,47 @@ import pickle
 # Load saved model
 with open('/Users/bagusdanantaras/Downloads/xgb_model_real.pkl', 'rb') as f:
     model = pickle.load(f)
-
 # Load saved scaler
 with open('/Users/bagusdanantaras/Downloads/scaler_real.pkl', 'rb') as f:
     scaler = pickle.load(f)
-
 # Load saved label encoders
 with open('/Users/bagusdanantaras/Downloads/label_encoders_real.pkl', 'rb') as f:
     label_encoders = pickle.load(f)
 
 # Define feature columns
-categorical_columns = ['person_gender', 'person_education', 'loan_intent',
-                       'person_home_ownership', 'previous_loan_defaults_on_file']
-numerical_columns = ['person_age', 'person_income', 'person_emp_exp', 'loan_amnt',
-                     'loan_int_rate', 'loan_percent_income', 'cb_person_cred_hist_length', 'credit_score']
+categorical_columns = [
+    'person_gender',
+    'person_education',
+    'loan_intent',
+    'person_home_ownership',
+    'previous_loan_defaults_on_file'
+]
+numerical_columns = [
+    'person_age',
+    'person_income',
+    'person_emp_exp',
+    'person_real_exp',
+    'loan_amnt',
+    'loan_int_rate',
+    'loan_percent_income',
+    'cb_person_cred_hist_length',
+    'credit_score'
+]
 
 def predict(input_data: dict):
+    # Create DataFrame
     df = pd.DataFrame([input_data])
 
     # Feature engineering: person_real_exp
     df['person_real_exp'] = df['person_age'] - df['person_emp_exp']
     df['person_real_exp'] = df.apply(
-        lambda row: row['person_emp_exp'] if row['person_emp_exp'] <= row['person_age']
-        else (row['person_real_exp'] if 16 <= row['person_real_exp'] <= 85 else np.nan),
+        lambda row: row['person_emp_exp'] if row['person_emp_exp'] <= row['person_age'] else (
+            row['person_real_exp'] if 16 <= row['person_real_exp'] <= 85 else np.nan
+        ),
         axis=1
     )
-    # Impute missing with training mean from scaler
-    idx = numerical_columns.index('person_real_exp')
-    mean_val = scaler.mean_[idx]
+    # Impute missing with training mean
+    mean_val = scaler.mean_[numerical_columns.index('person_real_exp')]
     df['person_real_exp'] = df['person_real_exp'].fillna(mean_val)
 
     # Encode categorical features
@@ -45,20 +58,21 @@ def predict(input_data: dict):
                 le.classes_ = np.append(le.classes_, 'unknown')
             df[col] = le.transform(df[col])
         else:
-            st.error(f"Encoder untuk kolom {col} tidak ditemukan!")
+            st.error(f"Encoder for column {col} not found!")
             return None
 
     # Scale numerical features
     df[numerical_columns] = scaler.transform(df[numerical_columns])
 
-    # Predict and decode
+    # Predict
     pred = model.predict(df)[0]
+    # Decode prediction
     target_le = label_encoders.get('loan_status')
     if target_le:
         return target_le.inverse_transform([pred])[0]
     return pred
 
-# Streamlit UI
+# Streamlit UI setup
 st.set_page_config(page_title='Loan Approval Predictor', layout='wide')
 st.title('📊 Loan Approval Prediction')
 
@@ -103,7 +117,7 @@ if submit:
 
 # Sidebar Test Cases
 st.sidebar.header('Test Case')
-if st.sidebar.button('Test Case 1'):  
+if st.sidebar.button('Test Case 1'):
     tc1 = {
         'person_age': 35,
         'person_emp_exp': 10,
@@ -138,4 +152,3 @@ if st.sidebar.button('Test Case 2'):
         'previous_loan_defaults_on_file': 'Yes'
     }
     st.sidebar.write('Prediksi TC2:', predict(tc2))
-
