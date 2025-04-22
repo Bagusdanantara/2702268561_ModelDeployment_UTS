@@ -43,6 +43,49 @@ numerical_columns = [
     'credit_score'
 ]
 
+def predict(input_data: dict) -> str:
+    # 📝 Convert input dict to DataFrame
+    df = pd.DataFrame([input_data])
+
+    # 🛠️ Feature engineering: create person_real_exp
+    df['person_real_exp'] = df['person_age'] - df['person_emp_exp']
+    df['person_real_exp'] = df.apply(
+        lambda row: row['person_emp_exp'] if row['person_emp_exp'] <= row['person_age'] else (
+            row['person_real_exp'] if 16 <= row['person_real_exp'] <= 85 else np.nan
+        ),
+        axis=1
+    )
+    # 🎯 Impute missing feature with training mean
+    mean_val = scaler.mean_[numerical_columns.index('person_real_exp')]
+    df['person_real_exp'] = df['person_real_exp'].fillna(mean_val)
+
+    # 🔄 Encode categorical features with saved encoders
+    for col in categorical_columns:
+        le = label_encoders.get(col)
+        if not le:
+            raise ValueError(f"Encoder for '{col}' not found!")
+        df[col] = df[col].apply(lambda x: x if x in le.classes_ else 'unknown')
+        if 'unknown' not in le.classes_:
+            le.classes_ = np.append(le.classes_, 'unknown')
+        df[col] = le.transform(df[col])
+
+    # 🔢 Scale numeric features using numpy array
+    num_array = scaler.transform(df[numerical_columns].values)
+    for idx, col in enumerate(numerical_columns):
+        df[col] = num_array[:, idx]
+
+    # 👉 Prepare array for model input
+    cat_vals = df[categorical_columns].values
+    num_vals = df[numerical_columns].values
+    X_input = np.hstack([cat_vals, num_vals])
+
+    # 🎯 Predict and decode
+    pred = model.predict(X_input)[0]
+    target_le = label_encoders.get('loan_status')
+    if target_le:
+        return target_le.inverse_transform([pred])[0]
+    return str(pred)
+
 # 🔄 Initialize default input values in session state
 default_vals = {
     'person_age': 30,
@@ -64,7 +107,24 @@ for key, val in default_vals.items():
         st.session_state[key] = val
 
 # 🧪 Sidebar: Test Cases - set session state values when clicked
-st.sidebar.title('🧪 Test Cases')
+# Definisikan data Test Case 1 dan 2
+tc1 = {
+    'person_age': 35, 'person_emp_exp': 10, 'person_income': 60000,
+    'loan_amnt': 15000, 'loan_int_rate': 11.5, 'loan_percent_income': 0.2,
+    'cb_person_cred_hist_length': 7, 'credit_score': 700,
+    'person_gender': 'male', 'person_education': 'Bachelor', 'loan_intent': 'EDUCATION',
+    'person_home_ownership': 'OWN', 'previous_loan_defaults_on_file': 'No'
+}
+
+tc2 = {
+    'person_age': 45, 'person_emp_exp': 20, 'person_income': 90000,
+    'loan_amnt': 30000, 'loan_int_rate': 9.5, 'loan_percent_income': 0.33,
+    'cb_person_cred_hist_length': 15, 'credit_score': 750,
+    'person_gender': 'female', 'person_education': 'Master', 'loan_intent': 'HOME',
+    'person_home_ownership': 'MORTGAGE', 'previous_loan_defaults_on_file': 'Yes'
+}
+
+st.sidebar.title('🧪 Test Cases')('🧪 Test Cases')
 
 # Capture button clicks
 tc1_clicked = st.sidebar.button('Load Test Case 1')
