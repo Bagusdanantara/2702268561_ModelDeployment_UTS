@@ -128,24 +128,34 @@ tc1_result = None
 tc2_result = None
 
 # Tekan untuk menjalankan Test Case 1
-tc1_data = {
-    'person_age': 35, 'person_emp_exp': 10, 'person_income': 60000,
-    'loan_amnt': 15000, 'loan_int_rate': 11.5, 'loan_percent_income': 0.2,
-    'cb_person_cred_hist_length': 7, 'credit_score': 700,
-    'person_gender': 'male', 'person_education': 'Bachelor', 'loan_intent': 'EDUCATION',
-    'person_home_ownership': 'OWN', 'previous_loan_defaults_on_file': 'No'
-}
+# Contoh input untuk Test Case 1:
+# - person_age=35: usia sedang (dewasa muda)
+# - person_emp_exp=10: pengalaman kerja 10 tahun stabil
+# - person_income=60000: pendapatan tahunan menengah-tinggi
+# - loan_amnt=15000: jumlah pinjaman relatif wajar terhadap income
+# - loan_int_rate=11.5: tingkat bunga standar
+# - loan_percent_income=0.2: pinjaman 20% dari pendapatan
+# - cb_person_cred_hist_length=7: riwayat kredit 7 tahun baik
+# - credit_score=700: skor kredit baik
+# - person_gender='male', person_education='Bachelor', loan_intent='EDUCATION',
+# - person_home_ownership='OWN', previous_loan_defaults_on_file='No'
+# Berdasarkan profil ini, model seharusnya mengembalikan 1 (Disetujui) karena profil kredit positif
 if st.sidebar.button('Test Case 1'):
     tc1_result = predict(tc1_data)
 
 # Tekan untuk menjalankan Test Case 2
-tc2_data = {
-    'person_age': 45, 'person_emp_exp': 20, 'person_income': 90000,
-    'loan_amnt': 30000, 'loan_int_rate': 9.5, 'loan_percent_income': 0.33,
-    'cb_person_cred_hist_length': 15, 'credit_score': 750,
-    'person_gender': 'female', 'person_education': 'Master', 'loan_intent': 'HOME',
-    'person_home_ownership': 'MORTGAGE', 'previous_loan_defaults_on_file': 'Yes'
-}
+# Contoh input untuk Test Case 2:
+# - person_age=45: usia lebih matang
+# - person_emp_exp=20: pengalaman kerja 20 tahun stabil
+# - person_income=90000: pendapatan tahunan tinggi
+# - loan_amnt=30000: jumlah pinjaman besar
+# - loan_int_rate=9.5: tingkat bunga rendah
+# - loan_percent_income=0.33: pinjaman 33% dari pendapatan
+# - cb_person_cred_hist_length=15: riwayat kredit 15 tahun panjang
+# - credit_score=750: skor kredit sangat baik
+# - person_gender='female', person_education='Master', loan_intent='HOME',
+# - person_home_ownership='MORTGAGE', previous_loan_defaults_on_file='Yes'
+# Profil ini pernah default sebelumnya, sehingga model kemungkinan memberikan 0 (Ditolak)
 if st.sidebar.button('Test Case 2'):
     tc2_result = predict(tc2_data)
 
