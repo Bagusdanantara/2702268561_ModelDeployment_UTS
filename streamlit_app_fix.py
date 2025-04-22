@@ -131,20 +131,22 @@ tc1_clicked = st.sidebar.button('Load Test Case 1')
 tc2_clicked = st.sidebar.button('Load Test Case 2')
 
 if tc1_clicked:
-    # Load Test Case 1 values into form
+    # Load Test Case 1 values into session state
     for k, v in tc1.items():
         st.session_state[k] = v
-    # Auto-predict for Test Case 1
-    tc1_input = {col: st.session_state[col] for col in numerical_columns + categorical_columns}
+    # Prepare input for prediction (exclude derived features)
+    input_fields = [col for col in numerical_columns + categorical_columns if col != 'person_real_exp']
+    tc1_input = {col: st.session_state[col] for col in input_fields}
     tc1_pred = predict(tc1_input)
     st.sidebar.success(f'🧪 Test Case 1 Prediksi: {tc1_pred}')
 
 if tc2_clicked:
-    # Load Test Case 2 values into form
+    # Load Test Case 2 values into session state
     for k, v in tc2.items():
         st.session_state[k] = v
-    # Auto-predict for Test Case 2
-    tc2_input = {col: st.session_state[col] for col in numerical_columns + categorical_columns}
+    # Prepare input for prediction (exclude derived features)
+    input_fields = [col for col in numerical_columns + categorical_columns if col != 'person_real_exp']
+    tc2_input = {col: st.session_state[col] for col in input_fields}
     tc2_pred = predict(tc2_input)
     st.sidebar.success(f'🧪 Test Case 2 Prediksi: {tc2_pred}')
 
