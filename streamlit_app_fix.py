@@ -64,25 +64,29 @@ for key, val in default_vals.items():
         st.session_state[key] = val
 
 # 🧪 Sidebar: Test Cases - set session state values when clicked
-tc1 = {
-    'person_age': 35, 'person_emp_exp': 10, 'person_income': 60000,
-    'loan_amnt': 15000, 'loan_int_rate': 11.5, 'loan_percent_income': 0.2,
-    'cb_person_cred_hist_length': 7, 'credit_score': 700,
-    'person_gender': 'male', 'person_education': 'Bachelor', 'loan_intent': 'EDUCATION',
-    'person_home_ownership': 'OWN', 'previous_loan_defaults_on_file': 'No'
-}
-tc2 = {
-    'person_age': 45, 'person_emp_exp': 20, 'person_income': 90000,
-    'loan_amnt': 30000, 'loan_int_rate': 9.5, 'loan_percent_income': 0.33,
-    'cb_person_cred_hist_length': 15, 'credit_score': 750,
-    'person_gender': 'female', 'person_education': 'Master', 'loan_intent': 'HOME',
-    'person_home_ownership': 'MORTGAGE', 'previous_loan_defaults_on_file': 'Yes'
-}
 st.sidebar.title('🧪 Test Cases')
-if st.sidebar.button('Load Test Case 1'):
-    for k, v in tc1.items(): st.session_state[k] = v
-if st.sidebar.button('Load Test Case 2'):
-    for k, v in tc2.items(): st.session_state[k] = v
+
+# Capture button clicks
+tc1_clicked = st.sidebar.button('Load Test Case 1')
+tc2_clicked = st.sidebar.button('Load Test Case 2')
+
+if tc1_clicked:
+    # Load Test Case 1 values into form
+    for k, v in tc1.items():
+        st.session_state[k] = v
+    # Auto-predict for Test Case 1
+    tc1_input = {col: st.session_state[col] for col in numerical_columns + categorical_columns}
+    tc1_pred = predict(tc1_input)
+    st.sidebar.success(f'🧪 Test Case 1 Prediksi: {tc1_pred}')
+
+if tc2_clicked:
+    # Load Test Case 2 values into form
+    for k, v in tc2.items():
+        st.session_state[k] = v
+    # Auto-predict for Test Case 2
+    tc2_input = {col: st.session_state[col] for col in numerical_columns + categorical_columns}
+    tc2_pred = predict(tc2_input)
+    st.sidebar.success(f'🧪 Test Case 2 Prediksi: {tc2_pred}')
 
 # 🎨 App Header with Emoji
 st.title('🌟 Loan Approval Prediction 🌟')
