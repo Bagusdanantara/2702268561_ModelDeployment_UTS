@@ -1,7 +1,12 @@
 import streamlit as st  # 🚀 Streamlit framework
+# 🚀 Set page config must be first Streamlit command
+st.set_page_config(
+    page_title='🌟 Loan Approval Predictor',
+    layout='centered'
+)
 import pandas as pd       # 📊 Data manipulation
 import numpy as np        # 🔢 Numerical operations
-import pickle             # 🗄️ Model serialization
+import pickle             # 🗄️ Model serialization             # 🗄️ Model serialization
 
 # 🎁 Load the trained model and preprocessing objects
 st.sidebar.header('🔄 Upload Model Files')
