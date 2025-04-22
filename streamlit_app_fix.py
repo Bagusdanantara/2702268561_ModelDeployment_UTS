@@ -43,10 +43,10 @@ numerical_columns = [
 ]
 
 def predict(input_data: dict) -> str:
-    # 📝 Convert input dict to DataFrame
+    # Convert input dict to DataFrame
     df = pd.DataFrame([input_data])
 
-    # 🛠️ Feature engineering: create person_real_exp
+    #  Feature engineering: create person_real_exp
     df['person_real_exp'] = df['person_age'] - df['person_emp_exp']
     df['person_real_exp'] = df.apply(
         lambda row: row['person_emp_exp'] if row['person_emp_exp'] <= row['person_age'] else (
