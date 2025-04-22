@@ -24,6 +24,18 @@ numerical_columns = ['person_age', 'person_income', 'person_emp_exp', 'loan_amnt
 def predict(input_data: dict):
     df = pd.DataFrame([input_data])
 
+    # Feature engineering: person_real_exp
+    df['person_real_exp'] = df['person_age'] - df['person_emp_exp']
+    df['person_real_exp'] = df.apply(
+        lambda row: row['person_emp_exp'] if row['person_emp_exp'] <= row['person_age']
+        else (row['person_real_exp'] if 16 <= row['person_real_exp'] <= 85 else np.nan),
+        axis=1
+    )
+    # Impute missing with training mean from scaler
+    idx = numerical_columns.index('person_real_exp')
+    mean_val = scaler.mean_[idx]
+    df['person_real_exp'] = df['person_real_exp'].fillna(mean_val)
+
     # Encode categorical features
     for col in categorical_columns:
         le = label_encoders.get(col)
@@ -126,3 +138,4 @@ if st.sidebar.button('Test Case 2'):
         'previous_loan_defaults_on_file': 'Yes'
     }
     st.sidebar.write('Prediksi TC2:', predict(tc2))
+
