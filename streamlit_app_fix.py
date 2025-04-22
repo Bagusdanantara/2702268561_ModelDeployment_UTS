@@ -87,11 +87,7 @@ def predict(input_data: dict) -> str:
         return target_le.inverse_transform([pred])[0]
     return str(pred)
 
-# 🚀 Streamlit App Configuration
-st.set_page_config(
-    page_title='🌟 Loan Approval Predictor',
-    layout='centered'
-)
+# App configuration already set at top. Skipping repeated set_page_config.
 
 # 🎨 App Header with Emoji
 st.title('🌟 Loan Approval Prediction 🌟')
