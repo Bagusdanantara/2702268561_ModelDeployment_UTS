@@ -4,15 +4,15 @@ import numpy as np
 import pickle
 
 # Load saved model
-with open('xgboost_model.pkl', 'rb') as f:
+with open('/Users/bagusdanantaras/Downloads/xgb_model_real.pkl', 'rb') as f:
     model = pickle.load(f)
 
 # Load saved scaler
-with open('scaler.pkl', 'rb') as f:
+with open('/Users/bagusdanantaras/Downloads/scaler_real.pkl', 'rb') as f:
     scaler = pickle.load(f)
 
 # Load saved label encoders
-with open('label_encoders.pkl', 'rb') as f:
+with open('/Users/bagusdanantaras/Downloads/label_encoders_real.pkl', 'rb') as f:
     label_encoders = pickle.load(f)
 
 with open('xgboost_model.pkl', 'rb') as f:
