@@ -15,12 +15,6 @@ with open('/Users/bagusdanantaras/Downloads/scaler_real.pkl', 'rb') as f:
 with open('/Users/bagusdanantaras/Downloads/label_encoders_real.pkl', 'rb') as f:
     label_encoders = pickle.load(f)
 
-with open('xgboost_model.pkl', 'rb') as f:
-    data = pickle.load(f)
-    model = data['model']
-    label_encoders = data['label_encoders']
-    scaler = data['scaler']
-
 # Define feature columns
 categorical_columns = ['person_gender', 'person_education', 'loan_intent',
                        'person_home_ownership', 'previous_loan_defaults_on_file']
