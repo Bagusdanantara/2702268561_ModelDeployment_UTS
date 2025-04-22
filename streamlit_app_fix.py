@@ -152,53 +152,52 @@ if tc2_clicked:
 
 # 🎨 App Header with Emoji
 st.title('🌟 Loan Approval Prediction 🌟')
-st.markdown('**Isi form berikut untuk mendapatkan prediksi persetujuan pinjaman!** ✍️')
+st.markdown('**Isi detail peminjam di bawah ini:** ✍️')
 
-# 🖥️ Main Input Form
-with st.form('input_form'):
-    st.subheader('🖊️ Masukkan Detail Peminjam')
-    inputs = {}
-    # Numeric inputs with session state defaults
-    inputs['person_age'] = st.number_input('Usia (tahun)', min_value=18, max_value=100,
-                                          value=st.session_state['person_age'], key='person_age')
-    inputs['person_emp_exp'] = st.number_input('Lama Bekerja (tahun)', min_value=0, max_value=50,
-                                               value=st.session_state['person_emp_exp'], key='person_emp_exp')
-    inputs['person_income'] = st.number_input('Pendapatan Tahunan',
-                                              value=st.session_state['person_income'], key='person_income')
-    inputs['loan_amnt'] = st.number_input('Jumlah Pinjaman',
-                                          value=st.session_state['loan_amnt'], key='loan_amnt')
-    inputs['loan_int_rate'] = st.number_input('Suku Bunga (%)',
-                                             value=st.session_state['loan_int_rate'], key='loan_int_rate')
-    inputs['loan_percent_income'] = st.number_input('Persentase Pinjaman terhadap Pendapatan',
-                                                   value=st.session_state['loan_percent_income'], key='loan_percent_income')
-    inputs['cb_person_cred_hist_length'] = st.number_input('Lama Riwayat Kredit (tahun)',
-                                                          value=st.session_state['cb_person_cred_hist_length'],
-                                                          key='cb_person_cred_hist_length')
-    inputs['credit_score'] = st.number_input('Credit Score', min_value=300, max_value=900,
-                                              value=st.session_state['credit_score'], key='credit_score')
-    # Categorical inputs with session state
-    inputs['person_gender'] = st.selectbox('Jenis Kelamin', label_encoders['person_gender'].classes_,
-                                           index=list(label_encoders['person_gender'].classes_).index(
-                                               st.session_state['person_gender']), key='person_gender')
-    inputs['person_education'] = st.selectbox('Pendidikan', label_encoders['person_education'].classes_,
-                                              index=list(label_encoders['person_education'].classes_).index(
-                                                  st.session_state['person_education']), key='person_education')
-    inputs['loan_intent'] = st.selectbox('Tujuan Pinjaman', label_encoders['loan_intent'].classes_,
-                                         index=list(label_encoders['loan_intent'].classes_).index(
-                                             st.session_state['loan_intent']), key='loan_intent')
-    inputs['person_home_ownership'] = st.selectbox('Kepemilikan Rumah', label_encoders['person_home_ownership'].classes_,
-                                                   index=list(label_encoders['person_home_ownership'].classes_).index(
-                                                       st.session_state['person_home_ownership']),
-                                                   key='person_home_ownership')
-    inputs['previous_loan_defaults_on_file'] = st.selectbox('Pernah Default Sebelumnya?',
-                                                            label_encoders['previous_loan_defaults_on_file'].classes_,
-                                                            index=list(label_encoders['previous_loan_defaults_on_file'].classes_)
-                                                            .index(st.session_state['previous_loan_defaults_on_file']),
-                                                            key='previous_loan_defaults_on_file')
+# 🖥️ Main Inputs tanpa form (langsung dengan button)
+inputs = {}
+inputs['person_age'] = st.number_input('Usia (tahun)', min_value=18, max_value=100,
+                                        value=st.session_state['person_age'], key='person_age')
+inputs['person_emp_exp'] = st.number_input('Lama Bekerja (tahun)', min_value=0, max_value=50,
+                                           value=st.session_state['person_emp_exp'], key='person_emp_exp')
+inputs['person_income'] = st.number_input('Pendapatan Tahunan',
+                                          value=st.session_state['person_income'], key='person_income')
+inputs['loan_amnt'] = st.number_input('Jumlah Pinjaman',
+                                      value=st.session_state['loan_amnt'], key='loan_amnt')
+inputs['loan_int_rate'] = st.number_input('Suku Bunga (%)',
+                                         value=st.session_state['loan_int_rate'], key='loan_int_rate')
+inputs['loan_percent_income'] = st.number_input('Persentase Pinjaman terhadap Pendapatan',
+                                               value=st.session_state['loan_percent_income'], key='loan_percent_income')
+inputs['cb_person_cred_hist_length'] = st.number_input('Lama Riwayat Kredit (tahun)',
+                                                      value=st.session_state['cb_person_cred_hist_length'],
+                                                      key='cb_person_cred_hist_length')
+inputs['credit_score'] = st.number_input('Credit Score', min_value=300, max_value=900,
+                                         value=st.session_state['credit_score'], key='credit_score')
 
-    submit = st.form_submit_button('🚀 Prediksi')
+inputs['person_gender'] = st.selectbox('Jenis Kelamin', label_encoders['person_gender'].classes_,
+                                       index=list(label_encoders['person_gender'].classes_).index(
+                                           st.session_state['person_gender']), key='person_gender')
+inputs['person_education'] = st.selectbox('Pendidikan', label_encoders['person_education'].classes_,
+                                          index=list(label_encoders['person_education'].classes_).index(
+                                              st.session_state['person_education']), key='person_education')
+inputs['loan_intent'] = st.selectbox('Tujuan Pinjaman', label_encoders['loan_intent'].classes_,
+                                     index=list(label_encoders['loan_intent'].classes_).index(
+                                         st.session_state['loan_intent']), key='loan_intent')
+inputs['person_home_ownership'] = st.selectbox('Kepemilikan Rumah', label_encoders['person_home_ownership'].classes_,
+                                               index=list(label_encoders['person_home_ownership'].classes_).index(
+                                                   st.session_state['person_home_ownership']),
+                                               key='person_home_ownership')
+inputs['previous_loan_defaults_on_file'] = st.selectbox('Pernah Default Sebelumnya?',
+                                                        label_encoders['previous_loan_defaults_on_file'].classes_,
+                                                        index=list(label_encoders['previous_loan_defaults_on_file'].classes_)
+                                                        .index(st.session_state['previous_loan_defaults_on_file']),
+                                                        key='previous_loan_defaults_on_file')
 
-# 🎉 Show result after submission
-if submit:
+# 🚀 Tombol Prediksi
+if st.button('🚀 Prediksi'):
+    # Simpan ke session state
+    for k, v in inputs.items():
+        st.session_state[k] = v
+    # Jalankan prediksi
     result = predict(inputs)
     st.success(f'✅ Hasil Prediksi: **{result}**')
